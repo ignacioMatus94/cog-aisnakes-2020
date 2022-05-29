@@ -32,6 +32,8 @@ public class Leviatan implements Bot {
      * @param manzana    Coordinate of an manzana
      * @return Direction of bot's move
      */
+
+     //codigo de la competencia
     @Override
     public Direction chooseDirection(Snake snake, Snake opponent, Coordinate mazeSize, Coordinate manzana)
     {
@@ -98,7 +100,7 @@ public class Leviatan implements Bot {
      * @return direction
      */
 
-    //direccion desde el inicio hasta fin (otra ubicacion)
+    //direccion desde el inicio hasta fin (otra ubicacion), codigo de la competencia
     public Direction direccionDesdeHacia(Coordinate inicio, Coordinate fin) {
 
         final Coordinate vector = new Coordinate(fin.x - inicio.x, fin.y - inicio.y);
@@ -132,7 +134,6 @@ public class Leviatan implements Bot {
 
 
       //  aplicar el alfa beta en minixax con tal de que la serpiente se adelante al enemigo
-    //
 
 
   /*      public int minimax(int depth, int nodeIndex, Boolean maximizarJugador,int values[], int alpha, int beta)
