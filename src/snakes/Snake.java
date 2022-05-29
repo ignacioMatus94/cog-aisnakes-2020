@@ -54,8 +54,17 @@ public class Snake implements Cloneable {
     public Snake(Coordinate head, Direction tailDirection, int size, Coordinate mazeSize) {
         this(head, mazeSize);
 
+
         Coordinate p = head.moveTo(tailDirection);
-        for (int i = 0; i < size - 1; i++) {
+
+        //este ciclo define la cantidad de cuadrados del cuerpo al inicio
+        //el 0 representa una serpiente con 2 cuadrados y la cabeza
+        //el 1 representa una serpiente con 1 cuadrados y la cabeza
+        //el 2 representa una serpiente con 0 cuadrados y la cabeza
+
+        for (int i = 0; i < size - 1; i++)
+        {
+            //agrega cuadrados a la serpiente
             body.addLast(p);
             elements.add(p);
             p = p.moveTo(tailDirection);
@@ -80,12 +89,14 @@ public class Snake implements Cloneable {
      * @return False - if collides with itself or maze bounds
      */
     public boolean moveTo(Direction d, boolean grow) {
+
         Coordinate newHead = getHead().moveTo(d);
 
         if (!newHead.inBounds(mazeSize))
             return false; // Left maze
 
-        if (!grow) {
+        if (!grow)
+        {
             elements.remove(body.removeLast());
         }
 

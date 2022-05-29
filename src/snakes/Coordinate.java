@@ -31,7 +31,8 @@ public class Coordinate implements Comparable<Coordinate> {
      * @param d the direction in which coordinate should be moved
      * @return a moved coordinate
      */
-    public Coordinate moveTo(Direction d) {
+    public Coordinate moveTo(Direction d)
+    {
         return add(this, d.v);
     }
 
@@ -40,11 +41,16 @@ public class Coordinate implements Comparable<Coordinate> {
      * @param other point to move
      * @return direction
      */
-    public Direction getDirection(Coordinate other) {
-        final Coordinate vector = new Coordinate(other.x - this.x, other.y - this.y);
+    public Direction getDirection(Coordinate other)
+    {
+        final Coordinate vector = new Coordinate(other.x - this.x, other.y - this.y); //vector= new Coordinate(x,y)
+
         for (Direction direction : Direction.values())
-            if (direction.dx == vector.x && direction.dy == vector.y)
+
+            if (direction.dx == vector.x && direction.dy == vector.y) //direccion.x==vector.x
+
                 return direction;
+
         return null;
     }
 
@@ -54,7 +60,9 @@ public class Coordinate implements Comparable<Coordinate> {
      * @param mazeSize size of the game board
      * @return True - if coordinate in bounds
      */
-    public boolean inBounds(Coordinate mazeSize) {
+    public boolean inBounds(Coordinate mazeSize)
+    {
+        //retorna el tamaño del tablero
         return x >= 0 && y >= 0 && x < mazeSize.x && y < mazeSize.y;
     }
 

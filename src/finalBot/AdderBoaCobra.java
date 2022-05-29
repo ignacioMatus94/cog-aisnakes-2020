@@ -99,11 +99,12 @@ public class AdderBoaCobra implements Bot, Runnable {
      * @return Direction of bot's move
      */
     @Override
-    public Direction chooseDirection(Snake snake, Snake opponent, Coordinate mazeSize, Coordinate apple) {
-        startTime = System.currentTimeMillis();
-        this.head = snake.getHead();
-        this.apple = apple;
-        return chooseMove(snake, opponent, mazeSize, apple);
+    public Direction chooseDirection(Snake snake, Snake opponent, Coordinate mazeSize, Coordinate apple)
+    {
+        startTime = System.currentTimeMillis(); //empieza a medir el tiempo
+        this.head = snake.getHead(); //la cabeza de la serpiente
+        this.apple = apple; //la manzana
+        return chooseMove(snake, opponent, mazeSize, apple); //retorna los valores
     }
 
     /**
@@ -115,60 +116,84 @@ public class AdderBoaCobra implements Bot, Runnable {
      * @param apple    Coordinate of an apple
      * @return Direction of bot's move
      */
-    private Direction chooseMove(Snake snake, Snake opponent, Coordinate mazeSize, Coordinate apple) {
-        Direction move; // The variable to be able to run more code before returning the direction
+    private Direction chooseMove(Snake snake, Snake opponent, Coordinate mazeSize, Coordinate apple)
+    {
+        Direction move;
 
-        if (apple_changed_during_circle) {
+        if (apple_changed_during_circle)
+        {
             circle_moves_after_apple_change--;
-            if (circle_moves_after_apple_change == 0) {
+
+            if (circle_moves_after_apple_change == 0)
+            {
                 circle_type = circle_type(apple, snake, opponent, mazeSize);
-                if (circle_type > 0) {
+
+                if (circle_type > 0)
+                {
                     setCircle_positions(apple, circle_type, mazeSize);
                 }
-//                System.out.println("Apple has changed position, circle_type is now: " + circle_type);
+
                 circle_complete = false;
                 circle_moves_after_apple_change = max_circle_moves_after_apple_change;
                 apple_changed_during_circle = false;
 
             }
         }
-        if (prev_apple != apple) {  // the apple has moved!
+
+        //la manzana es diferente a la anterior manzana que fue comida. generando que ocurra la condicion
+        if (prev_apple != apple)
+        {  // the apple has moved!
             // so, we need to determine the new circle_type
-            if (circle_complete) {
-                if (!apple_changed_during_circle) {
+            if (circle_complete)
+            {
+                if (!apple_changed_during_circle)
+                {
                     apple_changed_during_circle = true;
                     circle_moves_after_apple_change = max_circle_moves_after_apple_change;
                 }
-            } else {
+
+            }
+            else
+            {
                 circle_type = circle_type(apple, snake, opponent, mazeSize);
-                if (circle_type > 0) {
+
+                if (circle_type > 0)
+                {
                     setCircle_positions(apple, circle_type, mazeSize);
                 }
-//                System.out.println("Apple has changed position, circle_type is now: " + circle_type);
             }
         }
         prev_apple = apple;
 
         // circle_type = 0 means we're not circling the apple
-        if (circle_type > 0 && snake.body.size() > 5) {  // here we are circling
-            if (!circle_complete) {
+        if (circle_type > 0 && snake.body.size() > 5)
+        {  // here we are circling
+            if (!circle_complete)
+            {
                 circle_complete = circleComplete(snake, opponent, mazeSize, apple);
 
                 /****** determining if  go-towards-circle-with-alphabeta  ***/
                 // we want to use alphabeta to go towards our circle (that is safer)
+
                 boolean useAlphaBeta = false;
-                if (distanceBetween(head, apple) > 4 && !circle_complete) {
+
+                //distancia entre cabeza y manzana mayor a 4 y circulo no esta completo usar Alfabeta
+                if (distanceBetween(head, apple) > 4 && !circle_complete)
+                {
                     // if we're not close to the circle yet, use alphabeta to get there
                     useAlphaBeta = true;
                 }
-                for (int i = 0; i < circle_positions_length; i++) {
-                    if (snake.elements.contains(circle_positions[i])) {
+                for (int i = 0; i < circle_positions_length; i++)
+                {
+                    if (snake.elements.contains(circle_positions[i]))
+                    {
                         // if we cover any circle position, use BFS
                         useAlphaBeta = false;
                         break;
                     }
                 }
-                if (distanceBetween(opponent.getHead(), apple) == 1 && !circle_complete && closed_circle_type) {
+                if (distanceBetween(opponent.getHead(), apple) == 1 && !circle_complete && closed_circle_type)
+                {
                     // when the opponent got into our circle before we could close it: back to alphabeta!
                     // (we might bump into enemy-head, but we're in front, so no problem)
                     useAlphaBeta = true;
@@ -176,11 +201,15 @@ public class AdderBoaCobra implements Bot, Runnable {
                 /****** end of determining if  go-towards-circle-with-alphabeta  ***/
 
 
-                if (useAlphaBeta) {
+                if (useAlphaBeta)
+                {
                     move = chooseDirectionAlphaBeta(snake, opponent, mazeSize, apple, startTime);
 //                System.out.println("alpha beta while planning on circling");
-                } else {
-                    while (System.currentTimeMillis() - startTime < TIME_PER_TURN) {
+                }
+                else
+                {
+                    while (System.currentTimeMillis() - startTime < TIME_PER_TURN)
+                    {
                         // wait some time, for the human player
                     }
                     // filter out the apple from BFS's paths
@@ -188,35 +217,42 @@ public class AdderBoaCobra implements Bot, Runnable {
                     makeOpponentBFSGraph(snake, opponent, mazeSize, apple); // We do this before making our BFS because we want to calculate the distance to the apple
                     makeBFSGraph(snake, opponent, mazeSize, apple);
                     move = circle_direction();
-                    if (!circle_complete) {
-                        if (!checkMove(snake, opponent, mazeSize, apple, move)) { // If the move results in a problem (encloses itself)
+
+                    if (!circle_complete)
+                    {
+                        if (!checkMove(snake, opponent, mazeSize, apple, move))
+                        {
+                            // If the move results in a problem (encloses itself)
                             Coordinate furthestPoint = getFurthestPoint(snake_depth, mazeSize);
                             move = pathTo(furthestPoint);
-//                            System.out.println("I don't want to go there");
                         }
                     }
-//                System.out.println("circling move with BFS41");
                 }
 
 
-            } else {
+            }
+            else
+            {
                 // circle is complete here, so just follow our tail
-                while (System.currentTimeMillis() - startTime < TIME_PER_TURN) {
+                while (System.currentTimeMillis() - startTime < TIME_PER_TURN)
+                {
                     // wait some time, for the human player
                 }
                 move = directionFromTo(head, snake.body.getLast());
-                // System.out.println("following my tail");
             }
 
-        } else {  // here we are not circling
+        }
+        else
+        {
+            // here we are not circling
             circle_complete = false;
             circle_type = 0;
             dontTakeApple = false;
             move = chooseDirectionAlphaBeta(snake, opponent, mazeSize, apple, startTime);
-            // System.out.println("alpha beta move");
 
         }
-        if (move == null) {
+        if (move == null)
+        {
             // maybe if BFS is not returning anything
             // AB always returns a direction
             return chooseDirectionAlphaBeta(snake, opponent, mazeSize, apple, startTime);
@@ -244,164 +280,259 @@ public class AdderBoaCobra implements Bot, Runnable {
      * @return integer giving the circle type (see the pdf)
      */
     public int circle_type(Coordinate apple, Snake snake, Snake opponent, Coordinate mazeSize) {
-        int body = snake.body.size();
-        if (body % 2 == 0 && body > opponent.body.size() && body > 5) {
+        int body = snake.body.size(); //tamaño del cuerpo de la serpiente
+        if (body % 2 == 0 && body > opponent.body.size() && body > 5)
+        {
             boolean in_corner = false;
             closed_circle = true;
-            if (body > (opponent.body.size() + 1)) {
+
+            if (body > (opponent.body.size() + 1))
+            {
                 closed_circle = false;
             }
-            if ((apple.x < 3 && apple.y == 0) || (apple.y < 3 && apple.x == 0) || (apple.x > (mazeSize.x - 4) && apple.y == 0) || (apple.y < 3 && apple.x == (mazeSize.x - 1)) || (apple.x > (mazeSize.x - 4) && apple.y == (mazeSize.y - 1)) || (apple.x == (mazeSize.x - 1) && apple.y > (mazeSize.y - 4)) || (apple.x < 3 && apple.y == (mazeSize.y - 1)) || (apple.x == 0 && apple.y > (mazeSize.y - 4))) {
+
+            //si la manzana esta en un costado
+            if ((apple.x < 3 && apple.y == 0) || (apple.y < 3 && apple.x == 0) ||
+                    (apple.x > (mazeSize.x - 4) && apple.y == 0) ||
+                    (apple.y < 3 && apple.x == (mazeSize.x - 1)) ||
+                    (apple.x > (mazeSize.x - 4) && apple.y == (mazeSize.y - 1)) ||
+                    (apple.x == (mazeSize.x - 1) && apple.y > (mazeSize.y - 4)) ||
+                    (apple.x < 3 && apple.y == (mazeSize.y - 1)) ||
+                    (apple.x == 0 && apple.y > (mazeSize.y - 4)))
+            {
                 in_corner = true;
             }
-            //for (int i = 0; i < 12; i++) { //check if in a corner
-            //    if (apple.equals(corners[i])) {
-            //        in_corner = true;
-            //        break;
-            //    }
-            //}
-            if (in_corner) {
-                if (apple.x == 0 && apple.y < 3) { //upper left 1
-                    if (!closed_circle) {
+
+            if (in_corner)
+            {
+                if (apple.x == 0 && apple.y < 3)
+                { //upper left 1
+                    if (!closed_circle)
+                    {
                         return 2;
-                    } else if (body > 7) {
-                        if (apple.y == 0) {
+                    }
+                    else if (body > 7)
+                    {
+                        if (apple.y == 0)
+                        {
                             return 10;
                         }
-                        if (body > 9) {
-                            if (apple.y == 1) {
+                        if (body > 9)
+                        {
+                            if (apple.y == 1)
+                            {
                                 return 14;
                             }
-                            if (body > 11) {
+                            if (body > 11)
+                            {
                                 return 22;
                             }
                         }
                     }
-                } else if (apple.x < 3 && apple.y == 0) { //upper left 2
-                    if (!closed_circle) {
+                }
+                else if (apple.x < 3 && apple.y == 0)
+                { //upper left 2
+                    if (!closed_circle)
+                    {
                         return 6;
-                    } else if (body > 9) {
-                        if (apple.x == 1) {
+                    }
+                    else if (body > 9)
+                    {
+
+                        if (apple.x == 1)
+                        {
                             return 18;
                         }
-                        if (body > 11) {
+                        if (body > 11)
+                        {
                             return 26;
                         }
                     }
-                } else if (apple.x == (mazeSize.x - 1) && apple.y < 3) { //upper right 1
-                    if (!closed_circle) {
+                }
+                else if (apple.x == (mazeSize.x - 1) && apple.y < 3)
+                { //upper right 1
+                    if (!closed_circle)
+                    {
                         return 3;
-                    } else if (body > 7) {
-                        if (apple.y == 0) {
+                    }
+                    else if (body > 7)
+                    {
+                        if (apple.y == 0)
+                        {
                             return 11;
                         }
-                        if (body > 9) {
-                            if (apple.y == 1) {
+                        if (body > 9)
+                        {
+                            if (apple.y == 1)
+                            {
                                 return 15;
                             }
-                            if (body > 11) {
+                            if (body > 11)
+                            {
                                 return 23;
                             }
                         }
                     }
-                } else if (apple.x > (mazeSize.x - 4) && apple.y == 0) { //upper right 2
-                    if (!closed_circle) {
+                }
+                else if (apple.x > (mazeSize.x - 4) && apple.y == 0)
+                { //upper right 2
+
+                    if (!closed_circle)
+                    {
                         return 7;
-                    } else if (body > 9) {
-                        if (apple.x == mazeSize.x - 2) {
+                    }
+                    else if (body > 9)
+                    {
+                        if (apple.x == mazeSize.x - 2)
+                        {
                             return 19;
                         }
-                        if (body > 11) {
+                        if (body > 11)
+                        {
                             return 27;
                         }
                     }
-                } else if (apple.x == (mazeSize.x - 1) && apple.y > (mazeSize.y - 4)) { //bottom right 1
-                    if (!closed_circle) {
+                }
+                else if (apple.x == (mazeSize.x - 1) && apple.y > (mazeSize.y - 4))
+
+                { //bottom right 1
+                    if (!closed_circle)
+                    {
                         return 4;
-                    } else if (body > 7) {
-                        if (apple.y == (mazeSize.y - 1)) {
+                    }
+                    else if (body > 7)
+                    {
+                        if (apple.y == (mazeSize.y - 1))
+                        {
                             return 12;
                         }
-                        if (body > 9) {
-                            if (apple.y == (mazeSize.y - 2)) {
+                        if (body > 9)
+                        {
+                            if (apple.y == (mazeSize.y - 2))
+                            {
                                 return 16;
                             }
-                            if (body > 11) {
+                            if (body > 11)
+                            {
                                 return 24;
                             }
                         }
                     }
-                } else if (apple.x > (mazeSize.x - 4) && apple.y == (mazeSize.y - 1)) { //bottom right 2
-                    if (!closed_circle) {
+                }
+                else if (apple.x > (mazeSize.x - 4) && apple.y == (mazeSize.y - 1))
+                { //bottom right 2
+                    if (!closed_circle)
+                    {
                         return 8;
-                    } else if (body > 9) {
-                        if (apple.x == mazeSize.x - 2) {
+                    }
+                    else if (body > 9)
+                    {
+                        if (apple.x == mazeSize.x - 2)
+                        {
                             return 20;
                         }
-                        if (body > 11) {
+                        if (body > 11)
+                        {
                             return 28;
                         }
                     }
-                } else if (apple.x == 0 && apple.y > (mazeSize.y - 4)) { //bottom left 1
-                    if (!closed_circle) {
+                }
+                else if (apple.x == 0 && apple.y > (mazeSize.y - 4))
+                { //bottom left 1
+
+                    if (!closed_circle)
+                    {
                         return 5;
-                    } else if (body > 7) {
-                        if (apple.y == (mazeSize.y - 1)) {
+                    }
+                    else if (body > 7)
+                    {
+                        if (apple.y == (mazeSize.y - 1))
+                        {
                             return 13;
                         }
-                        if (body > 9) {
-                            if (apple.y == (mazeSize.y - 2)) {
+                        if (body > 9)
+                        {
+                            if (apple.y == (mazeSize.y - 2))
+                            {
                                 return 17;
                             }
-                            if (body > 11) {
+                            if (body > 11)
+                            {
                                 return 25;
                             }
                         }
                     }
-                } else if (apple.x < 3 && apple.y == (mazeSize.y - 1)) { //bottom left 2
-                    if (!closed_circle) {
+                }
+                else if (apple.x < 3 && apple.y == (mazeSize.y - 1))
+                { //bottom left 2
+                    if (!closed_circle)
+                    {
                         return 9;
-                    } else if (body > 9) {
-                        if (apple.x == 1) {
+                    }
+                    else if (body > 9)
+                    {
+                        if (apple.x == 1)
+                        {
                             return 21;
                         }
-                        if (body > 11) {
+                        if (body > 11)
+                        {
                             return 29;
                         }
                     }
                 }
-            } else {
-                if ((body > 7 && !closed_circle) || (body > 13)) { //sides
-                    if (apple.x == 0) {
-                        if (closed_circle) {
+            }
+            else
+            {
+                if ((body > 7 && !closed_circle) || (body > 13))
+                { //sides
+                    if (apple.x == 0)
+                    {
+                        if (closed_circle)
+                        {
                             return 41;
-                        } else {
+                        }
+                        else
+                        {
                             return 35; // OR 36!
                         }
                     }
-                    if (apple.x == (mazeSize.x - 1)) {
-                        if (closed_circle) {
+                    if (apple.x == (mazeSize.x - 1))
+                    {
+                        if (closed_circle)
+                        {
                             return 40;
-                        } else {
+                        }
+                        else
+                        {
                             return 34; // OR 37!
                         }
                     }
-                    if (apple.y == (mazeSize.y - 1)) {
-                        if (closed_circle) {
+                    if (apple.y == (mazeSize.y - 1))
+                    {
+                        if (closed_circle)
+                        {
                             return 38;
-                        } else {
+                        }
+                        else
+                        {
                             return 30; // OR 31!
                         }
                     }
-                    if (apple.y == 0) {
-                        if (closed_circle) {
+                    if (apple.y == 0)
+                    {
+                        if (closed_circle)
+                        {
                             return 39;
-                        } else {
+                        }
+                        else
+                        {
                             return 32; // OR 33!
                         }
                     }
                 }
-                if (body > 7) {
+                if (body > 7)
+                {
                     return 1;  // 1 means: apple is somewhere not on the edge, and we're gonna circle it
                 }
             }
@@ -420,9 +551,13 @@ public class AdderBoaCobra implements Bot, Runnable {
      * @param circle_type the type of circle, see pdf
      * @param mazeSize    the board
      */
-    public void setCircle_positions(Coordinate apple, int circle_type, Coordinate mazeSize) {
+    public void setCircle_positions(Coordinate apple, int circle_type, Coordinate mazeSize)
+    {
+
         circle_positions_iterator = 0;
-        switch (circle_type) {
+
+        switch (circle_type)
+        {
             case 1:
                 circle_positions_length = 4;
                 circle_positions[0] = new Coordinate(apple.x, (apple.y - 1));
@@ -751,25 +886,33 @@ public class AdderBoaCobra implements Bot, Runnable {
      *
      * @return the direction needed to go/continue circling
      */
-    public Direction circle_direction() {
-        if (head.equals(circle_positions[circle_positions_iterator % circle_positions_length])) {
+    public Direction circle_direction()
+    {
+        if (head.equals(circle_positions[circle_positions_iterator % circle_positions_length]))
+        {
             circle_positions_iterator++;
-//            System.out.println("Found_position");
         }
-        if (circle_type == 1) {
-            if (circle_positions_iterator == 1 && head.equals(circle_positions[3])) {
+
+        if (circle_type == 1)
+        {
+            if (circle_positions_iterator == 1 && head.equals(circle_positions[3]))
+            {
                 Coordinate temp2 = circle_positions[1];
                 circle_positions[1] = circle_positions[3];
                 circle_positions[3] = temp2;
                 circle_positions_iterator = 2;
-            } else if (circle_positions_iterator == 0 && head.equals(circle_positions[1])) {
+            }
+            else if (circle_positions_iterator == 0 && head.equals(circle_positions[1]))
+            {
                 Coordinate temp2 = circle_positions[1];
                 circle_positions[1] = circle_positions[3];
                 circle_positions[3] = temp2;
             }
         }
-        if (circle_type > 1 && circle_type < 10) {
-            if (circle_positions_iterator == 1 && head.equals(circle_positions[3])) {
+        if (circle_type > 1 && circle_type < 10)
+        {
+            if (circle_positions_iterator == 1 && head.equals(circle_positions[3]))
+            {
                 Coordinate temp2 = circle_positions[1];
                 circle_positions[1] = circle_positions[3];
                 circle_positions[3] = temp2;
@@ -777,18 +920,22 @@ public class AdderBoaCobra implements Bot, Runnable {
             }
         }
         if (circle_type > 9 && circle_type < 38) {
-            if (circle_positions_iterator == 1 && head.equals(circle_positions[2])) {
+            if (circle_positions_iterator == 1 && head.equals(circle_positions[2]))
+            {
                 Coordinate temp = circle_positions[0];
                 circle_positions[0] = circle_positions[1];
                 circle_positions[1] = temp;
                 circle_positions_iterator = 0;
             }
         }
-        if (circle_type > 37) {
-            if (head.equals(circle_positions[3])) {
+        if (circle_type > 37)
+        {
+            if (head.equals(circle_positions[3]))
+            {
                 found_position_5 = true;
             }
-            if (head.equals(backwards_indicator_position) && found_position_5) {
+            if (head.equals(backwards_indicator_position) && found_position_5)
+            {
                 Coordinate temp2 = circle_positions[1];
                 Coordinate temp3 = circle_positions[2];
                 Coordinate temp4 = circle_positions[3];
@@ -802,13 +949,17 @@ public class AdderBoaCobra implements Bot, Runnable {
                 circle_positions[2] = temp6;
                 circle_positions_iterator = 5;
             }
-            if (head.equals(circle_positions[2]) || head.equals(circle_positions[4]) || head.equals(circle_positions[0]) || head.equals(circle_positions[5])) {
+            if (head.equals(circle_positions[2]) || head.equals(circle_positions[4])
+                    || head.equals(circle_positions[0]) || head.equals(circle_positions[5]))
+            {
                 found_position_5 = false;
             }
         }
-        if (circle_positions_iterator > 10) {
+        if (circle_positions_iterator > 10)
+        {
             circle_positions_iterator = circle_positions_iterator % circle_positions_length;
         }
+
         return pathTo(circle_positions[circle_positions_iterator % circle_positions_length]);
     }
 
@@ -821,37 +972,56 @@ public class AdderBoaCobra implements Bot, Runnable {
      * @param apple    the apple
      * @return true if complete, false if not yet
      */
-    public boolean circleComplete(Snake snake, Snake opponent, Coordinate mazeSize, Coordinate apple) {
+    public boolean circleComplete(Snake snake, Snake opponent, Coordinate mazeSize, Coordinate apple)
+    {
         // first check if all circle positions are covered
-        for (int i = 0; i < circle_positions_length; i++) {
-            if (!snake.elements.contains(circle_positions[i])) {
+        for (int i = 0; i < circle_positions_length; i++)
+        {
+            if (!snake.elements.contains(circle_positions[i]))
+            {
                 return false;
             }
         }
 
         makeOpponentBFSGraphBreakOnApple(snake, opponent, mazeSize, apple);
-        if (closed_circle_type) {
+
+        if (closed_circle_type)
+        {
             // here the opponent cannot have a path to the apple
             // and also checks if our head is next to our tail
-            if (opponent_breakOnApple_cameFrom.get(apple) == null && distanceBetween(head, snake.body.getLast()) == 1) {
+            if (opponent_breakOnApple_cameFrom.get(apple) == null && distanceBetween(head, snake.body.getLast()) == 1)
+            {
                 return true;
-            } else {
+            }
+
+            else
+            {
                 return false;
             }
-        } else {
+
+        }
+        else
+        {
             // here the opponent is allowed to have only 1 path to the apple
             // so check all tiles next to apple: only 1 of them should have a value in the opponent_breakOnApple_cameFrom
             int counter = 0;
-            for (Direction dir : DIRECTIONS) {
-                if (apple.moveTo(dir).inBounds(mazeSize)) {
-                    if (opponent_breakOnApple_cameFrom.get(apple.moveTo(dir)) != null) {
+
+            for (Direction dir : DIRECTIONS)
+            {
+                if (apple.moveTo(dir).inBounds(mazeSize))
+                {
+                    if (opponent_breakOnApple_cameFrom.get(apple.moveTo(dir)) != null)
+                    {
                         counter++;
                     }
                 }
             }
-            if (counter <= 1 && distanceBetween(head, snake.body.getLast()) == 1) {
+            if (counter <= 1 && distanceBetween(head, snake.body.getLast()) == 1)
+            {
                 return true;
-            } else {
+            }
+            else
+            {
                 return false;
             }
         }
@@ -864,15 +1034,20 @@ public class AdderBoaCobra implements Bot, Runnable {
      * @param mazeSize   needed to check the whole grid
      * @return Coordinate, the furthest reachable point
      */
-    private Coordinate getFurthestPoint(HashMap depth_grid, Coordinate mazeSize) {
+    private Coordinate getFurthestPoint(HashMap depth_grid, Coordinate mazeSize)
+    {
         Coordinate destination = null; //
         int distance = 0;
+
         // Make it search for the longest path and make it go to that path
         for (int x = 0; x < mazeSize.x; x++)
-            for (int y = 0; y < mazeSize.y; y++) {
+            for (int y = 0; y < mazeSize.y; y++)
+            {
                 Coordinate check = new Coordinate(x, y);
-                if (depth_grid.containsKey(check)) {
-                    if ((int) depth_grid.get(check) > distance) {
+                if (depth_grid.containsKey(check))
+                {
+                    if ((int) depth_grid.get(check) > distance)
+                    {
                         destination = check;
                         distance = (int) depth_grid.get(check);
                     }
@@ -889,13 +1064,19 @@ public class AdderBoaCobra implements Bot, Runnable {
      * @param mazeSize   needed to check the whole grid
      * @return Coordinate, the furthest reachable point
      */
-    private Coordinate[] findDepth(int depth, HashMap depth_grid, Coordinate mazeSize) {
+    private Coordinate[] findDepth(int depth, HashMap depth_grid, Coordinate mazeSize)
+    {
         ArrayList sol = new ArrayList();
+
         for (int x = 0; x < mazeSize.x; x++)
-            for (int y = 0; y < mazeSize.y; y++) {
+
+            for (int y = 0; y < mazeSize.y; y++)
+            {
                 Coordinate check = new Coordinate(x, y);
-                if (depth_grid.containsKey(check)) {
-                    if (depth_grid.get(check).equals(depth)) {
+                if (depth_grid.containsKey(check))
+                {
+                    if (depth_grid.get(check).equals(depth))
+                    {
                         sol.add(check);
                     }
                 }
@@ -911,18 +1092,26 @@ public class AdderBoaCobra implements Bot, Runnable {
      * @param goal coordinate of the place where you want to go
      * @return Direction, the step to take or null if there is no route
      */
-    private Direction pathTo(Coordinate goal) {
+    private Direction pathTo(Coordinate goal)
+    {
         ArrayList path = new ArrayList(); // This will be the route from the goal to the head
-        if (snake_cameFrom.containsKey(goal)) { // If this is not the case, the goal is enclosed by a snake
+
+        if (snake_cameFrom.containsKey(goal))
+        { // If this is not the case, the goal is enclosed by a snake
             path.add((goal));
-        } else {
+        }
+        else
+        {
             return null; // Path is unreachable
         }
 
         Direction move; // The command to move to
-        while (path.get(path.size() - 1) != head) {
+
+        while (path.get(path.size() - 1) != head)
+        {
             path.add(snake_cameFrom.get(path.get(path.size() - 1)));
         }
+
         move = directionFromTo(head, (Coordinate) path.get(path.size() - 2));
         return move;
     }
@@ -940,12 +1129,16 @@ public class AdderBoaCobra implements Bot, Runnable {
      * @param move     The move you want to check
      * @return returns the number of reachable blocks
      */
-    int reachable_part(Snake snake, Snake opponent, Coordinate mazeSize, Coordinate apple, Direction move) {
+    int reachable_part(Snake snake, Snake opponent, Coordinate mazeSize, Coordinate apple, Direction move)
+    {
         Coordinate newHead;
         int correction = 0;
-        if (move == null) {
+        if (move == null)
+        {
             newHead = snake.getHead();
-        } else {
+        }
+        else
+        {
             newHead = Coordinate.add(snake.getHead(), move.v);
             correction = 1;
         }
@@ -956,21 +1149,28 @@ public class AdderBoaCobra implements Bot, Runnable {
         arrayVisited[newHead.x][newHead.y] = true; // No need to check head
 
         // Set all positions in arrayVisited where a snake is to true, so the BFS does not consider this as a route option
-        for (int x = 0; x < mazeSize.x; x++) {
-            for (int y = 0; y < mazeSize.y; y++) {
-                if (snake.elements.contains(new Coordinate(x, y)) || opponent.elements.contains(new Coordinate(x, y))) {
+        for (int x = 0; x < mazeSize.x; x++)
+        {
+            for (int y = 0; y < mazeSize.y; y++)
+            {
+                if (snake.elements.contains(new Coordinate(x, y)) || opponent.elements.contains(new Coordinate(x, y)))
+                {
                     arrayVisited[x][y] = true;
                 }
             }
         }
+
         arrayVisited[snake.body.getLast().x][snake.body.getLast().y] = false; // We don't reach the tail anymore
 
         // Also ignore possible locations for the next head for the opponent to avoid tieing
         // Only if the player is behind, otherwise it's worth the risk
         // EDIT: never ignore new head location because that could block the snake
-        for (Direction step : Direction.values()) {
+
+        for (Direction step : Direction.values())
+        {
             Coordinate newPos = Coordinate.add(opponent.getHead(), step.v);
-            if (newPos.inBounds(mazeSize)) {
+            if (newPos.inBounds(mazeSize))
+            {
                 arrayVisited[newPos.x][newPos.y] = true;
             }
         }
@@ -984,28 +1184,38 @@ public class AdderBoaCobra implements Bot, Runnable {
         ArrayList queue = new ArrayList(); // The queue list needed for BFS
         queue.add(newHead); // Add head as starting point for the queue
         depth.put(newHead, 0 + correction);
+
         int depth_level_handled = 0 + correction; // Tells if we already tog
         int weCanReachApple = 0;
         int opponentCanReachApple = 0;
+
         // The main BFS loop
-        while (queue.isEmpty() == false) {
+        while (queue.isEmpty() == false)
+        {
             Coordinate start = (Coordinate) queue.get(0);
             Integer depth_level = depth.get(start) + 1; // The depth level
 
-            if (apple.inBounds(mazeSize)) {
-                if (snake_depth.containsKey(apple)) {
-                    if (depth_level >= snake_depth.get(apple)) {
+            if (apple.inBounds(mazeSize))
+            {
+                if (snake_depth.containsKey(apple))
+                {
+                    if (depth_level >= snake_depth.get(apple))
+                    {
                         weCanReachApple = 1;
                     }
                 }
-                if (opponent_depth.containsKey(apple)) {
-                    if (depth_level >= opponent_depth.get(apple)) {
+                if (opponent_depth.containsKey(apple))
+                {
+                    if (depth_level >= opponent_depth.get(apple))
+                    {
                         opponentCanReachApple = 1;
                     }
                 }
             }
 
-            if (depth_level > depth_level_handled) { // So we make sure this loop is only executed once
+            if (depth_level > depth_level_handled)
+
+            { // So we make sure this loop is only executed once
 
                 /* !! EXPERIMENTAL RULE !! marks all the possible head locations of the enemy snake as visited
                  * A possible tweak for this, is to only mark realistic head location as true or only upto a certain depth
@@ -1016,50 +1226,68 @@ public class AdderBoaCobra implements Bot, Runnable {
                 //    arrayVisited[possible_enemy_head.x][possible_enemy_head.y] = true;
                 //}
 
-                if (depth_level < snake.body.size() + weCanReachApple) {
-                    if (weCanReachApple - depth_level != 0) {
+                if (depth_level < snake.body.size() + weCanReachApple)
+                {
+                    if (weCanReachApple - depth_level != 0)
+                    {
                         Coordinate remove_tail_snake = (Coordinate) snake.body.toArray()[snake.body.size() + weCanReachApple - depth_level];
                         arrayVisited[remove_tail_snake.x][remove_tail_snake.y] = false;
-                    } else { // Now we are at a depth higher than the snake size, thu
-                        for (Coordinate empty : findDepth(depth_level - snake.body.size() - weCanReachApple, snake_depth, mazeSize)) {
+
+                    }
+                    else
+                    { // Now we are at a depth higher than the snake size, thu
+                        for (Coordinate empty : findDepth(depth_level - snake.body.size() - weCanReachApple, snake_depth, mazeSize))
+                        {
                             arrayVisited[empty.x][empty.y] = false;
                         }
                     }
                 }
-                if (depth_level < opponent.body.size() + opponentCanReachApple) {
-                    if (opponentCanReachApple - depth_level != 0) {
+
+                if (depth_level < opponent.body.size() + opponentCanReachApple)
+                {
+                    if (opponentCanReachApple - depth_level != 0)
+                    {
                         Coordinate remove_tail_opponent = (Coordinate) opponent.body.toArray()[opponent.body.size() + opponentCanReachApple - depth_level];
                         arrayVisited[remove_tail_opponent.x][remove_tail_opponent.y] = false;
                     }
-                } else {
-                    for (Coordinate empty : findDepth(depth_level - opponentCanReachApple - opponent.body.size(), opponent_depth, mazeSize)) {
+
+                }
+                else
+                {
+                    for (Coordinate empty : findDepth(depth_level - opponentCanReachApple - opponent.body.size(), opponent_depth, mazeSize))
+                    {
                         arrayVisited[empty.x][empty.y] = false;
                     }
                 }
+
                 depth_level_handled++;
             }
 
 
-            for (Direction step : Direction.values()) {
+            for (Direction step : Direction.values())
+            {
                 Coordinate newPos = Coordinate.add(start, step.v);
-                if (newPos.inBounds(mazeSize)) { // Skip this if for positions out of the maze
-                    if (!arrayVisited[newPos.x][newPos.y]) {
+                if (newPos.inBounds(mazeSize))
+                { // Skip this if for positions out of the maze
+                    if (!arrayVisited[newPos.x][newPos.y])
+                    {
                         queue.add(newPos); // If this place is not visited add it to the queue
                         arrayVisited[newPos.x][newPos.y] = true; // We don't want to visit this place again.
-                        if (!cameFrom.containsKey(newPos)) {
+
+                        if (!cameFrom.containsKey(newPos))
+                        {
                             cameFrom.put(newPos, start); // Puts the location start in newPos so we can trace back how we got to the apple.
                             depth.put(newPos, depth_level);
                         }
                     }
                 }
-            /*
-            if (newPos == apple) {
-                break; // We found the apple in the fastest route, no need to look further
-            } */
+
             }
             queue.remove(0); // Remove the checked position from the search array
         }
+
         return cameFrom.size();
+
     }
 
     /**
@@ -1072,10 +1300,13 @@ public class AdderBoaCobra implements Bot, Runnable {
      * @param move     the move we're making
      * @return true if move is safe, false if it is dangerous (high chance of enclosing ourselves)
      */
-    private boolean checkMove(Snake snake, Snake opponent, Coordinate mazeSize, Coordinate apple, Direction move) {
+    private boolean checkMove(Snake snake, Snake opponent, Coordinate mazeSize, Coordinate apple, Direction move)
+    {
+
         int new_reachable = reachable_part(snake, opponent, mazeSize, apple, move);
-        if (((double) new_reachable / oldReachable) < 0.8) {
-//            System.out.println("Let's not do that");
+
+        if (((double) new_reachable / oldReachable) < 0.8)
+        {
             // TODO check when this happens there is a real treat
             return false;
         }
@@ -1094,7 +1325,8 @@ public class AdderBoaCobra implements Bot, Runnable {
      *                 marks the depth (distance) for each reachable coordinate
      *                 notes the old size number of positions reachable for the snake
      */
-    private void makeBFSGraph(Snake snake, Snake opponent, Coordinate mazeSize, Coordinate apple) {
+    private void makeBFSGraph(Snake snake, Snake opponent, Coordinate mazeSize, Coordinate apple)
+    {
         oldReachable = snake_cameFrom.size();
         snake_cameFrom.clear();
         snake_depth.clear();
@@ -1106,14 +1338,18 @@ public class AdderBoaCobra implements Bot, Runnable {
         boolean[][] arrayVisited = new boolean[mazeSize.x][mazeSize.y];
 
         arrayVisited[head.x][head.y] = true; // No need to check head
-        if (dontTakeApple) {
+        if (dontTakeApple)
+        {
             arrayVisited[apple.x][apple.y] = true;  // No paths going over the apple, when we don't want to do that
         }
 
         // Set all positions in arrayVisited where a snake is to true, so the BFS does not consider this as a route option
-        for (int x = 0; x < mazeSize.x; x++) {
-            for (int y = 0; y < mazeSize.y; y++) {
-                if (snake.elements.contains(new Coordinate(x, y)) || opponent.elements.contains(new Coordinate(x, y))) {
+        for (int x = 0; x < mazeSize.x; x++)
+        {
+            for (int y = 0; y < mazeSize.y; y++)
+            {
+                if (snake.elements.contains(new Coordinate(x, y)) || opponent.elements.contains(new Coordinate(x, y)))
+                {
                     arrayVisited[x][y] = true;
                 }
             }
@@ -1124,9 +1360,11 @@ public class AdderBoaCobra implements Bot, Runnable {
         // Also ignore possible locations for the next head for the opponent to avoid tieing
         // Only if the player is behind, otherwise it's worth the risk
         if (snake.body.size() <= opponent.body.size())
-            for (Direction move : Direction.values()) {
+            for (Direction move : Direction.values())
+            {
                 Coordinate newPos = Coordinate.add(opponent.getHead(), move.v);
-                if (newPos.inBounds(mazeSize)) {
+                if (newPos.inBounds(mazeSize))
+                {
                     arrayVisited[newPos.x][newPos.y] = true;
                 }
             }
@@ -1142,43 +1380,63 @@ public class AdderBoaCobra implements Bot, Runnable {
         int weCanReachApple = 0; // Turns one if true
         int opponentCanReachApple = 0;
         // The main BFS loop
-        while (queue.isEmpty() == false) {
+        while (queue.isEmpty() == false)
+        {
             Coordinate start = (Coordinate) queue.get(0);
             Integer depth_level = snake_depth.get(start) + 1; // The depth level
             if (apple.inBounds(mazeSize)) {
-                if (snake_depth.containsKey(apple)) {
-                    if (depth_level >= snake_depth.get(apple)) {
+                if (snake_depth.containsKey(apple))
+                {
+                    if (depth_level >= snake_depth.get(apple))
+                    {
                         weCanReachApple = 1;
                     }
                 }
-                if (opponent_depth.containsKey(apple)) {
-                    if (depth_level >= opponent_depth.get(apple)) {
+
+                if (opponent_depth.containsKey(apple))
+                {
+                    if (depth_level >= opponent_depth.get(apple))
+                    {
                         opponentCanReachApple = 1;
                     }
                 }
             }
             // TODO it doesn't account if the person eats an apple
-            if (depth_level > depth_level_handled) { // So we make sure this loop is only executed once
-                if (depth_level < snake.body.size() + weCanReachApple) {
-                    if (weCanReachApple - depth_level != 0) {
+            if (depth_level > depth_level_handled)
+            { // So we make sure this loop is only executed once
+
+                if (depth_level < snake.body.size() + weCanReachApple)
+                {
+                    if (weCanReachApple - depth_level != 0)
+                    {
                         Coordinate remove_tail_snake = (Coordinate) snake.body.toArray()[snake.body.size() + weCanReachApple - depth_level];
                         arrayVisited[remove_tail_snake.x][remove_tail_snake.y] = false;
-                    } else { // Now we are at a depth higher than the snake size, thu
-                        for (Coordinate empty : findDepth(depth_level - snake.body.size() - weCanReachApple, snake_depth, mazeSize)) {
+                    }
+                    else
+                    { // Now we are at a depth higher than the snake size, thu
+                        for (Coordinate empty : findDepth(depth_level - snake.body.size() - weCanReachApple, snake_depth, mazeSize))
+                        {
                             arrayVisited[empty.x][empty.y] = false;
                         }
                     }
                 }
-                if (depth_level < opponent.body.size() + opponentCanReachApple) {
-                    if (opponentCanReachApple - depth_level != 0) {
+
+                if (depth_level < opponent.body.size() + opponentCanReachApple)
+                {
+                    if (opponentCanReachApple - depth_level != 0)
+                    {
                         Coordinate remove_tail_opponent = (Coordinate) opponent.body.toArray()[opponent.body.size() + opponentCanReachApple - depth_level];
                         arrayVisited[remove_tail_opponent.x][remove_tail_opponent.y] = false;
                     }
-                } else {
-                    for (Coordinate empty : findDepth(depth_level - opponentCanReachApple - opponent.body.size(), opponent_depth, mazeSize)) {
+                }
+                else
+                {
+                    for (Coordinate empty : findDepth(depth_level - opponentCanReachApple - opponent.body.size(), opponent_depth, mazeSize))
+                    {
                         arrayVisited[empty.x][empty.y] = false;
                     }
                 }
+
                 depth_level_handled++;
             }
 
@@ -1188,13 +1446,17 @@ public class AdderBoaCobra implements Bot, Runnable {
         }
 
          */
-            for (Direction move : Direction.values()) {
+            for (Direction move : Direction.values())
+            {
                 Coordinate newPos = Coordinate.add(start, move.v);
-                if (newPos.inBounds(mazeSize)) { // Skip this if for positions out of the maze
-                    if (!arrayVisited[newPos.x][newPos.y]) {
+                if (newPos.inBounds(mazeSize))
+                { // Skip this if for positions out of the maze
+                    if (!arrayVisited[newPos.x][newPos.y])
+                    {
                         queue.add(newPos); // If this place is not visited add it to the queue
                         arrayVisited[newPos.x][newPos.y] = true; // We don't want to visit this place again.
-                        if (!snake_cameFrom.containsKey(newPos)) {
+                        if (!snake_cameFrom.containsKey(newPos))
+                        {
                             snake_cameFrom.put(newPos, start); // Puts the location start in newPos so we can trace back how we got to the apple.
                             snake_depth.put(newPos, depth_level);
                         }
@@ -1222,7 +1484,8 @@ public class AdderBoaCobra implements Bot, Runnable {
      *                 notes the old size number of positions reachable for the snake
      *                 Also includes a predictor if the opponent can be enclosed
      */
-    private void makeOpponentBFSGraph(Snake opponent, Snake snake, Coordinate mazeSize, Coordinate apple) {
+    private void makeOpponentBFSGraph(Snake opponent, Snake snake, Coordinate mazeSize, Coordinate apple)
+    {
         opponent_cameFrom.clear();
         opponent_depth.clear();
         Coordinate opponent_head = snake.getHead();
@@ -1233,9 +1496,12 @@ public class AdderBoaCobra implements Bot, Runnable {
         arrayVisited[opponent_head.x][opponent_head.y] = true; // No need to check head
 
         // Set all positions in arrayVisited where a snake is to true, so the BFS does not consider this as a route option
-        for (int x = 0; x < mazeSize.x; x++) {
-            for (int y = 0; y < mazeSize.y; y++) {
-                if (snake.elements.contains(new Coordinate(x, y)) || opponent.elements.contains(new Coordinate(x, y))) {
+        for (int x = 0; x < mazeSize.x; x++)
+        {
+            for (int y = 0; y < mazeSize.y; y++)
+            {
+                if (snake.elements.contains(new Coordinate(x, y)) || opponent.elements.contains(new Coordinate(x, y)))
+                {
                     arrayVisited[x][y] = true;
                 }
             }
@@ -1244,9 +1510,11 @@ public class AdderBoaCobra implements Bot, Runnable {
         // This is still enabled not, because if one of these move causes trouble for the opponent snake, this means we can
         // enclose it
         if (snake.body.size() <= opponent.body.size())
-            for (Direction move : Direction.values()) {
+            for (Direction move : Direction.values())
+            {
                 Coordinate newPos = Coordinate.add(opponent.getHead(), move.v);
-                if (newPos.inBounds(mazeSize)) {
+                if (newPos.inBounds(mazeSize))
+                {
                     arrayVisited[newPos.x][newPos.y] = true;
                 }
             }
@@ -1261,30 +1529,44 @@ public class AdderBoaCobra implements Bot, Runnable {
         int weCanReachApple = 0; // Turns one if true
         int depth_level_handled = 0; // Turns one if true
         // The main BFS loop
-        while (queue.isEmpty() == false) {
+        while (queue.isEmpty() == false)
+        {
             Coordinate start = (Coordinate) queue.get(0);
             Integer depth_level = opponent_depth.get(start) + 1; // The depth level
-            if (opponent_depth.containsKey(apple)) {
-                if (depth_level >= opponent_depth.get(apple)) {
+            if (opponent_depth.containsKey(apple))
+            {
+                if (depth_level >= opponent_depth.get(apple))
+                {
                     weCanReachApple = 1;
                 }
             }
             // TODO it doesn't account if the person eats an apple
-            if (depth_level > depth_level_handled) { // So we make sure this loop is only executed once
-                if (depth_level < snake.body.size() + weCanReachApple) {
-                    if (weCanReachApple - depth_level != 0) {
+            if (depth_level > depth_level_handled)
+            { // So we make sure this loop is only executed once
+                if (depth_level < snake.body.size() + weCanReachApple)
+                {
+                    if (weCanReachApple - depth_level != 0)
+                    {
                         Coordinate remove_tail_snake = (Coordinate) snake.body.toArray()[snake.body.size() + weCanReachApple - depth_level];
                         arrayVisited[remove_tail_snake.x][remove_tail_snake.y] = false;
                     }
-                } else { // Now we need to edit all the places we visited in the arraylist
-                    for (Coordinate empty : findDepth(depth_level - weCanReachApple - snake.body.size(), opponent_depth, mazeSize)) {
+
+                }
+                else
+                { // Now we need to edit all the places we visited in the arraylist
+                    for (Coordinate empty : findDepth(depth_level - weCanReachApple - snake.body.size(), opponent_depth, mazeSize))
+                    {
                         arrayVisited[empty.x][empty.y] = false;
                     }
                 }
-                if (depth_level < opponent.body.size()) {
+                if (depth_level < opponent.body.size())
+                {
                     Coordinate remove_tail_opponent = (Coordinate) opponent.body.toArray()[opponent.body.size() - depth_level];
                     arrayVisited[remove_tail_opponent.x][remove_tail_opponent.y] = false;
-                } else { // TODO does not work because this is using the old BFS graph and is thus outdated
+                }
+                else
+                {
+                    // TODO does not work because this is using the old BFS graph and is thus outdated
                     //for (Coordinate empty : findDepth(depth_level - opponentCanReachApple - opponent.body.size(), snake_depth,mazeSize)){
                     //    arrayVisited[empty.x][empty.y] = false;
                     //}
@@ -1293,13 +1575,19 @@ public class AdderBoaCobra implements Bot, Runnable {
             }
 
 
-            for (Direction move : Direction.values()) {
+            for (Direction move : Direction.values())
+            {
                 Coordinate newPos = Coordinate.add(start, move.v);
-                if (newPos.inBounds(mazeSize)) { // Skip this if for positions out of the maze
-                    if (!arrayVisited[newPos.x][newPos.y]) {
+                if (newPos.inBounds(mazeSize))
+                { // Skip this if for positions out of the maze
+
+                    if (!arrayVisited[newPos.x][newPos.y])
+                    {
                         queue.add(newPos); // If this place is not visited add it to the queue
                         arrayVisited[newPos.x][newPos.y] = true; // We don't want to visit this place again.
-                        if (!opponent_cameFrom.containsKey(newPos)) {
+                        if (!opponent_cameFrom.containsKey(newPos))
+
+                        {
                             opponent_cameFrom.put(newPos, start); // Puts the location start in newPos so we can trace back how we got to the apple.
                             opponent_depth.put(newPos, depth_level);
                         }
@@ -1313,12 +1601,14 @@ public class AdderBoaCobra implements Bot, Runnable {
             queue.remove(0); // Remove the checked position from the search array
         }
 
-        if (opponent_oldReachable == 0) {
+        if (opponent_oldReachable == 0)
+        {
             opponent_oldReachable = opponent_cameFrom.size();
         }
         int opponent_newReachable = opponent_cameFrom.size();
-        if (((double) opponent_newReachable / opponent_oldReachable) < 0.6) { // If the enemy lost significant movement
-//            System.out.println("enemy snake lost a lot of movement space");
+        if (((double) opponent_newReachable / opponent_oldReachable) < 0.6)
+        {
+            // If the enemy lost significant movement
             checkCanEnclose = true;
         }
     }
@@ -1334,7 +1624,9 @@ public class AdderBoaCobra implements Bot, Runnable {
      *                 makes a BFS graph of the current stat: opponent_breakOnApple_cameFrom,
      *                 marks the depth (distance) for each reachable coordinate: opponent_breakOnApple_depth
      */
-    private void makeOpponentBFSGraphBreakOnApple(Snake opponent, Snake snake, Coordinate mazeSize, Coordinate apple) {
+    private void makeOpponentBFSGraphBreakOnApple(Snake opponent, Snake snake, Coordinate mazeSize, Coordinate apple)
+    {
+
         opponent_breakOnApple_cameFrom.clear();
         opponent_breakOnApple_depth.clear();
         Coordinate opponent_head = snake.getHead();
@@ -1345,9 +1637,12 @@ public class AdderBoaCobra implements Bot, Runnable {
         arrayVisited[opponent_head.x][opponent_head.y] = true; // No need to check head
 
         // Set all positions in arrayVisited where a snake is to true, so the BFS does not consider this as a route option
-        for (int x = 0; x < mazeSize.x; x++) {
-            for (int y = 0; y < mazeSize.y; y++) {
-                if (snake.elements.contains(new Coordinate(x, y)) || opponent.elements.contains(new Coordinate(x, y))) {
+        for (int x = 0; x < mazeSize.x; x++)
+        {
+            for (int y = 0; y < mazeSize.y; y++)
+            {
+                if (snake.elements.contains(new Coordinate(x, y)) || opponent.elements.contains(new Coordinate(x, y)))
+                {
                     arrayVisited[x][y] = true;
                 }
             }
@@ -1363,40 +1658,15 @@ public class AdderBoaCobra implements Bot, Runnable {
         int weCanReachApple = 0; // Turns one if true
         int depth_level_handled = 0; // Turns one if true
         // The main BFS loop
-        while (queue.isEmpty() == false) {
+        while (queue.isEmpty() == false)
+        {
             Coordinate start = (Coordinate) queue.get(0);
             Integer depth_level = opponent_breakOnApple_depth.get(start) + 1; // The depth level
 
-            /*
-            if (opponent_breakOnApple_depth.containsKey(apple)) {
-                if (depth_level >= opponent_breakOnApple_depth.get(apple)) {
-                    weCanReachApple = 1;
-                }
-            }
-            if (depth_level > depth_level_handled) { // So we make sure this loop is only executed once
-                if (depth_level < snake.body.size() + weCanReachApple) {
-                    if (weCanReachApple - depth_level != 0) {
-                        Coordinate remove_tail_snake = (Coordinate) snake.body.toArray()[snake.body.size() + weCanReachApple - depth_level];
-                        arrayVisited[remove_tail_snake.x][remove_tail_snake.y] = false;
-                    }
-                } else { // Now we need to edit all the places we visited in the arraylist
-                    for (Coordinate empty : findDepth(depth_level - weCanReachApple -snake.body.size(), opponent_breakOnApple_depth, mazeSize)){
-                        arrayVisited[empty.x][empty.y] = false;
-                    }
-                }
-                if (depth_level < opponent.body.size()) {
-                    Coordinate remove_tail_opponent = (Coordinate) opponent.body.toArray()[opponent.body.size() - depth_level];
-                    arrayVisited[remove_tail_opponent.x][remove_tail_opponent.y] = false;
-                } else { // TODO does not work because this is using the old BFS graph and is thus outdated
-                    //for (Coordinate empty : findDepth(depth_level - opponentCanReachApple - opponent.body.size(), snake_depth,mazeSize)){
-                    //    arrayVisited[empty.x][empty.y] = false;
-                    //}
-                }
-                depth_level_handled++;
-            }
-            */
 
-            for (Direction move : Direction.values()) {
+
+            for (Direction move : Direction.values())
+            {
                 Coordinate newPos = Coordinate.add(start, move.v);
                 if (newPos.inBounds(mazeSize)) { // Skip this if for positions out of the maze
                     if (!arrayVisited[newPos.x][newPos.y]) {
@@ -1434,34 +1704,41 @@ public class AdderBoaCobra implements Bot, Runnable {
      * @param startTime the time our turn started
      * @return a direction to move towards
      */
-    public Direction chooseDirectionAlphaBeta(Snake snake, Snake opponent, Coordinate mazeSize, Coordinate apple, long startTime) {
+    public Direction chooseDirectionAlphaBeta(Snake snake, Snake opponent, Coordinate mazeSize, Coordinate apple, long startTime)
+    {
         preVariableAssignment(snake, opponent, mazeSize, apple);
         final_move = Direction.UP;
         exit = false;
         Thread t1 = new Thread(this);
         t1.start();
-        while (System.currentTimeMillis() - startTime < TIME_PER_TURN) {
+        while (System.currentTimeMillis() - startTime < TIME_PER_TURN)
+        {
+
         }
         exit = true;
         return final_move;
     }
 
-    public void run() {
+    public void run()
+    {
         int i = 2;
-        //System.out.println("enter loop");
-        while (!exit) {
-            //timeLimit = (long) (System.currentTimeMillis() + ((long) 1000 * searchfactor));
+        while (!exit)
+        {
             maxDepth = i;
-            //System.out.println("depth " + i);
-            try {
+            try
+            {
                 final_move = makeMinMax();
-            } catch (NullPointerException e) {
-                //System.out.println("Exit with nullpointer");
+            }
+
+            catch (NullPointerException e)
+
+            {
                 break;
             }
+
             i += 2;
+
         }
-//        System.out.println("Depth level reached (shortPerc): " + (i - 2) / 2);
     }
 
     /**
@@ -1473,7 +1750,9 @@ public class AdderBoaCobra implements Bot, Runnable {
      * @param apple1    Coordinate of an apple
      */
     private void preVariableAssignment(Snake snake1, Snake opponent1, Coordinate mazeSize1, Coordinate apple1) {
-        if (snake1.body.size() < 5) { // Reset variables at new snake run
+        if (snake1.body.size() < 5)
+        {
+            // Reset variables at new snake run
             chase_tail = false;
         }
 
@@ -1493,34 +1772,50 @@ public class AdderBoaCobra implements Bot, Runnable {
      *
      * @return Direction of bot's move
      */
-    private Direction makeMinMax() {
-        if (chase_tail) { // We won
+    private Direction makeMinMax()
+    {
+        if (chase_tail)
+        {
+            // We won
             return directionFromTo(snake.getHead(), snake.body.getLast());
-        } else { // Do the normal strategy
+        }
+        else
+        {
+            // Do the normal strategy
             getAppleSpots();
             Object[] cur_state = {snake.clone(), opponent.clone(), -1, -1, -1, (double) 0};
             minmax(cur_state, cur_state, maxDepth, Integer.MIN_VALUE, Integer.MAX_VALUE, true); // minimax(state, newstate, depth, alpha, beta, maximizing player)
 
-            if (distanceBetween(snake.getHead(), snake.body.getLast()) == 1 && circleScore(cur_state) >= scr_circlePart2 * 0.9) {
+            if (distanceBetween(snake.getHead(), snake.body.getLast()) == 1 && circleScore(cur_state) >= scr_circlePart2 * 0.9)
+            {
                 chase_tail = true;
                 return directionFromTo(snake.getHead(), snake.body.getLast());
-            } else {
-                if (bestMove != null) {
+            }
+
+            else
+            {
+                if (bestMove != null)
+                {
                     return bestMove;
-                } else {
-//                    System.out.println("We had a good run son");
+                }
+                else
+                {
                     return doValidMove(snake, opponent, mazeSize);
                 }
             }
         }
     }
 
-    private void getAppleSpots() {
-        if (apple.inBounds(mazeSize)) {
+    private void getAppleSpots()
+    {
+        if (apple.inBounds(mazeSize))
+        {
             ArrayList<Coordinate> spots = new ArrayList<Coordinate>();
-            for (Direction move : Direction.values()) {
+            for (Direction move : Direction.values())
+            {
                 Coordinate newPos = Coordinate.add(apple, move.v);
-                if (newPos.inBounds(mazeSize)) {
+                if (newPos.inBounds(mazeSize))
+                {
                     spots.add(newPos);
                 }
             }
@@ -1537,8 +1832,11 @@ public class AdderBoaCobra implements Bot, Runnable {
      * @param maximizingPlayer Is true when we are looking at out snake (thus maximsing our score), is false otherwise
      * @return Direction of bot's move
      */
-    private int minmax(Object[] state, Object[] newState, int depth, int alpha, int beta, boolean maximizingPlayer) {
-        if (depth % 2 == 0) { // We update the state once both snakes have made their move, otherwise the game.
+    private int minmax(Object[] state, Object[] newState, int depth, int alpha, int beta, boolean maximizingPlayer)
+    {
+        if (depth % 2 == 0)
+        {
+            // We update the state once both snakes have made their move, otherwise the game.
             state = newState.clone();
         }
         Coordinate shead; // The head of the new snake
@@ -1550,87 +1848,132 @@ public class AdderBoaCobra implements Bot, Runnable {
         double percentage_or_diff_ratio = (double) state[5];
         Direction[] moves;
 
+
         // This if statement fetches the possible moves for the snake we are evaluating
-        if (maximizingPlayer) {
+        if (maximizingPlayer)
+        {
             shead = our_snake.body.getFirst();
             moves = notLosingAlgorithm(state, maximizingPlayer); // Get moves for our snake
-        } else {
+        }
+        else
+        {
             shead = opp_snake.body.getFirst();
             moves = notLosingAlgorithm(state, maximizingPlayer); // Get moves for the opponent snake
         }
 
         // Calculate score when we reached a dead end or the max depth
-        if (depth == 0 || moves == null) {
+        if (depth == 0 || moves == null)
+        {
             int score = calculateScore(state, maximizingPlayer, moves, depth);
             return score; // The heuristic value of the node
         }
         // Determine the move where we can get the maximum score giving the current state
-        if (maximizingPlayer) { // Our snake
+        if (maximizingPlayer)
+        {
+            // Our snake
             int calc_score = Integer.MIN_VALUE; // The worst score possible
-            for (Direction move : moves) { // Each child (also includes the childs killing itself, we filter this out by calculating the score)
+            for (Direction move : moves)
+            {
+                // Each child (also includes the childs killing itself, we filter this out by calculating the score)
                 Coordinate newHead = Coordinate.add(shead, move.v);
-                if (newHead.equals(opp_snake.body.getLast()) && distanceBetween(opp_snake.body.getFirst(), apple) == 1) {
+
+                if (newHead.equals(opp_snake.body.getLast()) && distanceBetween(opp_snake.body.getFirst(), apple) == 1)
+                {
                     return scr_WeCantMove;
                 }
+
                 Object[] updatedState = newState.clone(); // We clone newState, otherwise editing the updatedState will also edit newState
 
                 Snake newSnake = our_snake.clone(); // We do the same thing as above
                 // TODO find a better way for the below if the statements
-                if (!newHead.equals(apple)) { // If this is not true we keep the last block of our snake, because we have eaten the apple
+                if (!newHead.equals(apple))
+                {
+                    // If this is not true we keep the last block of our snake, because we have eaten the apple
                     newSnake.body.removeLast(); // Remove the last block of our snake if we have not eaten the apple
-                } else {
-                    if (depth_OppAteApple == -1) { // If the opponent has not eaten the apple before we reached it
+                }
+                else
+                {
+                    if (depth_OppAteApple == -1)
+                    {
+                        // If the opponent has not eaten the apple before we reached it
                         updatedState[2] = depth / 2;
                     }
                 }
-                if (newHead.equals(centre)) { // We reached the centre
+                if (newHead.equals(centre))
+                {
+                    // We reached the centre
                     updatedState[4] = depth / 2;
                 }
+
                 newSnake.body.addFirst(newHead); // Update the newSnake with its new head position
                 updatedState[0] = newSnake; // Store the new snake in updatedState[0]
 
                 int new_score = minmax(state, updatedState, depth - 1, alpha, beta, false); // Get the score of this move
 
-                if (new_score > calc_score) { // If the score of this move is better than the best score we had, store the new move
+                if (new_score > calc_score)
+                {
+                    // If the score of this move is better than the best score we had, store the new move
                     calc_score = new_score;
-                    if (depth == maxDepth) { // Store the best move for the snake to do
+
+                    if (depth == maxDepth)
+                    {
+                        // Store the best move for the snake to do
                         bestMove = move;
                         bestScore = new_score;
                     }
                 }
                 alpha = Math.max(alpha, new_score);
-                if (alpha >= beta) {
+                if (alpha >= beta)
+                {
                     break;
                 }
             }
             return calc_score; // Return the best score for this state (the move we will most likely do)
 
-        } else { // For the opponent we know the move to get the worst score possible for our snake, because this is the best move
+        }
+        else
+        { // For the opponent we know the move to get the worst score possible for our snake, because this is the best move
             int calc_score = Integer.MAX_VALUE; // The best score possible
-            for (Direction move : moves) { // The rest works the same as above unless there is a comment
+            for (Direction move : moves)
+            {
+                // The rest works the same as above unless there is a comment
                 Coordinate newHead = Coordinate.add(shead, move.v);
                 Object[] updatedState = newState.clone();
                 Snake newSnake = opp_snake.clone();
 
-                if (!newHead.equals(apple)) {
+                if (!newHead.equals(apple))
+                {
                     newSnake.body.removeLast();
-                } else {
-                    if (depth_WeAteApple == -1) { // Our snake has not yet eaten the apple
+                }
+                else
+                {
+                    if (depth_WeAteApple == -1)
+                    {
+                        // Our snake has not yet eaten the apple
                         updatedState[3] = (depth + 1) / 2;
                     }
                 }
+
                 newSnake.body.addFirst(newHead);
                 updatedState[1] = newSnake; // Opp snakes move
-                if ((int) updatedState[3] == (depth + 1) / 2 || (int) updatedState[2] == (depth + 1) / 2) { // If someone ate an apple at this depth layer
+
+                if ((int) updatedState[3] == (depth + 1) / 2 || (int) updatedState[2] == (depth + 1) / 2)
+                {
+                    // If someone ate an apple at this depth layer
                     // Add the reachable score once the apple is eaten
                     updatedState[5] = (double) simplePercentageOfTilesCloserToUsDos((Snake) updatedState[0], (Snake) updatedState[1], mazeSize, apple);
                 }
                 int new_score = minmax(state, updatedState, depth - 1, alpha, beta, true);
-                if (new_score < calc_score) { // If the score of this move is worse than the worst score we had, store the new move
+                if (new_score < calc_score)
+                {
+                    // If the score of this move is worse than the worst score we had, store the new move
                     calc_score = new_score;
                 }
+
                 beta = Math.min(beta, new_score);
-                if (alpha >= beta) {
+
+                if (alpha >= beta)
+                {
                     break;
                 }
             }
@@ -1647,10 +1990,14 @@ public class AdderBoaCobra implements Bot, Runnable {
      * @param depth      Depth of graph --> depth/2 = How many moves foward we are currently looking
      * @return The heuristic score of the state
      */
-    private int calculateScore(Object[] state, boolean isOurSnake, Direction[] moves, int depth) {
-        if (exit) {
+    private int calculateScore(Object[] state, boolean isOurSnake, Direction[] moves, int depth)
+    {
+        if (exit)
+        {
             throw new NullPointerException();
         }
+
+
         int score = 0;
         Snake our_snake = (Snake) state[0];
         Snake opp_snake = (Snake) state[1];
@@ -1685,7 +2032,9 @@ public class AdderBoaCobra implements Bot, Runnable {
         return score;
     }
 
-    private int ScoreForGoingSomewhere(boolean noOneAteApple, Object[] state) {
+    private int ScoreForGoingSomewhere(boolean noOneAteApple, Object[] state)
+
+    {
         int distanceToApple = 0;
 //        int distanceToCentre = 0;
         double percentageCloserToUs = 0;
@@ -1697,30 +2046,43 @@ public class AdderBoaCobra implements Bot, Runnable {
         int depth_WeReachedCentre = (int) state[4];
         double percentage_or_diff_ratio = (double) state[5];
         Coordinate snake_head = our_snake.getHead();
-        if (noOneAteApple) {
+        if (noOneAteApple)
+        {
             distanceToApple += distanceBetween(snake_head, apple);
-        } else { // Give an incentive to move towards the centre so there is a better chance to reach the next apple
-            if (depth_weAteApple == -1) { // The opponent ate the apple
+        }
+        else
+        {
+            // Give an incentive to move towards the centre so there is a better chance to reach the next apple
+            if (depth_weAteApple == -1)
+            {
+                // The opponent ate the apple
                 score += scr_OppAteApple - depth_oppAteApple;
-//                if (!(depth_WeReachedCentre == -1)) { // We have no reached the apple
-//                    score += scr_weReachedCentre + depth_WeReachedCentre * 10;
-//                }
+
                 percentageCloserToUs = percentage_or_diff_ratio;
-//                distanceToCentre += distanceBetween(snake_head, centre);
-            } else { // We ate the apple
+            }
+            else
+            {
+                // We ate the apple
                 score += scr_WeAteApple + depth_weAteApple;
             }
         }
+
         return score + (fct_distanceToApple * distanceToApple + (int) (fct_earlyReachableTiles * percentageCloserToUs));
     }
 
-    private int scoreHeadCollision(Coordinate snake_head, Coordinate opp_head, int diff_size) {
+    private int scoreHeadCollision(Coordinate snake_head, Coordinate opp_head, int diff_size)
+    {
         int GoodHeadColl = 0;
         int BadHeadColl = 0;
-        if (snake_head.equals(opp_head)) {
-            if (diff_size > 0) {
+
+        if (snake_head.equals(opp_head))
+        {
+            if (diff_size > 0)
+            {
                 GoodHeadColl += 1;
-            } else if (diff_size < 0) {
+            }
+            else if (diff_size < 0)
+            {
                 BadHeadColl += 1;
             }
         }
@@ -1728,8 +2090,10 @@ public class AdderBoaCobra implements Bot, Runnable {
                 + scr_GoodHeadColl * GoodHeadColl);
     }
 
-    private int scoreDeadEnd(boolean isOurSnake, Direction[] moves, int depth) {
-        if (moves == null) {
+    private int scoreDeadEnd(boolean isOurSnake, Direction[] moves, int depth)
+    {
+        if (moves == null)
+        {
             int WeCantMove = 0;
             int OppCantMove = 0;
             if (isOurSnake) { // We went to a dead end
@@ -1739,12 +2103,15 @@ public class AdderBoaCobra implements Bot, Runnable {
             }
             return (scr_WeCantMove * WeCantMove
                     + scr_OppCantMove * OppCantMove) * depth + 1;
-        } else {
+        }
+        else
+        {
             return 0;
         }
     }
 
-    private int scoreCollisions(Snake our_snake, Snake opp_snake) {
+    private int scoreCollisions(Snake our_snake, Snake opp_snake)
+    {
         final Coordinate snake_head = our_snake.body.getFirst();
         final Coordinate opp_head = opp_snake.body.getFirst();
         int WeCantMove = 0;
@@ -1756,10 +2123,14 @@ public class AdderBoaCobra implements Bot, Runnable {
         opp_snake_nohead.removeFirst();              // NOTE: opp_snake now also does not have a head
 
         //Check collisions
-        if (our_snake_nohead.contains(snake_head) || opp_snake_nohead.contains(snake_head)) { // We collide with something
+        if (our_snake_nohead.contains(snake_head) || opp_snake_nohead.contains(snake_head))
+        {
+            // We collide with something
             WeCantMove += 1;
         }
-        if (our_snake_nohead.contains(opp_head) || opp_snake_nohead.contains(opp_head)) { // The opponent collided with itself, so this is good
+        if (our_snake_nohead.contains(opp_head) || opp_snake_nohead.contains(opp_head))
+        {
+            // The opponent collided with itself, so this is good
             OppCantMove += 1;
         }
 
@@ -1771,7 +2142,8 @@ public class AdderBoaCobra implements Bot, Runnable {
                 + scr_OppCantMove * OppCantMove);
     }
 
-    private int circleScore(Object[] state) {
+    private int circleScore(Object[] state)
+    {
         Snake our_snake = (Snake) state[0];
         int opp_snake_size = ((Snake) state[1]).body.size();
         int our_snake_size = our_snake.body.size();
@@ -1785,19 +2157,34 @@ public class AdderBoaCobra implements Bot, Runnable {
         Coordinate snake_head = our_snake.body.getFirst();
 
 
-        if (diff_size >= 1) { // We're in the lead, no need to eat the apple
-            if (depth_oppAteApple > -1) {
+        if (diff_size >= 1)
+        {
+            // We're in the lead, no need to eat the apple
+            if (depth_oppAteApple > -1)
+            {
                 losingLead += 1; // Because the opponent ate the apple we lost the lead
-            } else if (noOneAteApple && our_snake_size >= 6 && our_snake.body.size() % 2 == 0) { // We can possibly encircle the position
+            }
+            else if (noOneAteApple && our_snake_size >= 6 && our_snake.body.size() % 2 == 0)
+            { // We can possibly encircle the position
+
                 // TODO: define onRightSpotForCircle(check_snake) with Wolf's algrotihm
                 circle_part1 = onRightSpotForCircle(our_snake); // Calculate the probability of the circle working
-                if (circle_part1 > 0) { // There is a chance to circle
-                    if (circle_part1 == 1) { // Not fully enclosed
-                        if (diff_size >= 2 && distanceBetween(snake_head, our_snake.body.getLast()) == 1) {
+
+                if (circle_part1 > 0)
+                {
+                    // There is a chance to circle
+                    if (circle_part1 == 1)
+                    { // Not fully enclosed
+                        if (diff_size >= 2 && distanceBetween(snake_head, our_snake.body.getLast()) == 1)
+                        {
                             circle_part2 = 1;
                         }
-                    } else { // Fully enclosed
-                        if (distanceBetween(snake_head, our_snake.body.getLast()) == 1) { // TODO edit this, so it will follow its tail
+                    } else
+                    {
+                        // Fully enclosed
+                        if (distanceBetween(snake_head, our_snake.body.getLast()) == 1)
+                        {
+                            // TODO edit this, so it will follow its tail
                             circle_part2 = 1;
                         }
                     }
@@ -1816,18 +2203,27 @@ public class AdderBoaCobra implements Bot, Runnable {
      *                  appleSpots: the coordinates the snake needs to cover
      * @return direction // TODO direction? (Bram)
      */
-    private int onRightSpotForCircle(Snake our_snake) {
+    private int onRightSpotForCircle(Snake our_snake)
+    {
         int arraySize = appleSpots.length;
         int spotsCovered = 0;
-        for (int i = 0; i < arraySize; i++) {
-            if (our_snake.body.contains(appleSpots[i])) { // We are on one of the spots
+
+        for (int i = 0; i < arraySize; i++)
+        {
+            if (our_snake.body.contains(appleSpots[i]))
+            {
+                // We are on one of the spots
                 spotsCovered++;
             }
         }
 
-        if (spotsCovered >= arraySize) { // We covered at least all but one spot > exiting is hard
+        if (spotsCovered >= arraySize)
+        {
+            // We covered at least all but one spot > exiting is hard
             return 1; // Good scenario
-        } else {
+        }
+        else
+        {
             return 0; // Nothing special
         }
     }
@@ -1839,7 +2235,8 @@ public class AdderBoaCobra implements Bot, Runnable {
      * @param point2 Coodrinate
      * @return distance
      */
-    private int distanceBetween(Coordinate point1, Coordinate point2) {
+    private int distanceBetween(Coordinate point1, Coordinate point2)
+    {
         return Math.abs(point1.x - point2.x) + Math.abs(point1.y - point2.y);
     }
 
@@ -1850,18 +2247,26 @@ public class AdderBoaCobra implements Bot, Runnable {
      * @param other point to move
      * @return direction
      */
-    public Direction directionFromTo(Coordinate start, Coordinate other) {
+    public Direction directionFromTo(Coordinate start, Coordinate other)
+    {
         final Coordinate vector = new Coordinate(other.x - start.x, other.y - start.y);
-        if (vector.x > 0) {
+        if (vector.x > 0)
+        {
             return Direction.RIGHT;
-        } else if (vector.x < 0) {
+        }
+        else if (vector.x < 0)
+        {
             return Direction.LEFT;
         }
-        if (vector.y > 0) {
+        if (vector.y > 0)
+        {
             return Direction.UP;
-        } else if (vector.y < 0) {
+        }
+        else if (vector.y < 0)
+        {
             return Direction.DOWN;
         }
+
         for (Direction direction : Direction.values())
             if (direction.dx == vector.x && direction.dy == vector.y)
                 return direction;
@@ -1875,8 +2280,10 @@ public class AdderBoaCobra implements Bot, Runnable {
      * @param isOurSnake if we want to determine the moves for our snake
      * @return direction
      */
-    private Direction[] notLosingAlgorithm(Object[] cur_state, Boolean isOurSnake) {
-        if (exit) {
+    private Direction[] notLosingAlgorithm(Object[] cur_state, Boolean isOurSnake)
+    {
+        if (exit)
+        {
             throw new NullPointerException();
         }
         Snake move_snake; // the snake were we want to determine the possible moves of
@@ -1886,17 +2293,25 @@ public class AdderBoaCobra implements Bot, Runnable {
         if (isOurSnake) { // Assign the right snakes and check if the apple has been eaten
             move_snake = (Snake) cur_state[0];
             opp_snake = (Snake) cur_state[1];
-            if ((int) cur_state[2] > -1) {
+            if ((int) cur_state[2] > -1)
+            {
                 bool_weAteApple = true;
-            } else if ((int) cur_state[3] > -1) {
+            }
+            else if ((int) cur_state[3] > -1)
+            {
                 bool_oppAteApple = true;
             }
-        } else {
+        }
+        else
+        {
             move_snake = (Snake) cur_state[1];
             opp_snake = (Snake) cur_state[0];
-            if ((int) cur_state[3] > -1) {
+            if ((int) cur_state[3] > -1)
+            {
                 bool_weAteApple = true;
-            } else if ((int) cur_state[2] > -1) {
+            }
+            else if ((int) cur_state[2] > -1)
+            {
                 bool_oppAteApple = true;
             }
         }
@@ -1906,7 +2321,8 @@ public class AdderBoaCobra implements Bot, Runnable {
 
         // Get the coordinate of the second element of the snake's body to prevent going backwards
         Coordinate afterHeadNotFinal = null;
-        if (move_snake.body.size() >= 2) {
+        if (move_snake.body.size() >= 2)
+        {
             Iterator<Coordinate> it = move_snake.body.iterator();
             it.next();
             afterHeadNotFinal = it.next();
@@ -1938,14 +2354,17 @@ public class AdderBoaCobra implements Bot, Runnable {
     /**
      * Do a valid move when no moves possible
      */
-    private Direction doValidMove(Snake snake1, Snake opponent1, Coordinate mazeSize) {
+    private Direction doValidMove(Snake snake1, Snake opponent1, Coordinate mazeSize)
+    {
         Coordinate snakehead = snake1.getHead();
 
         // Get the coordinate of the second element of the snake's body to prevent going backwards
         Coordinate afterHeadNotFinal = null;
 
 
-        if (snake1.body.size() >= 2) {
+        if (snake1.body.size() >= 2)
+        {
+
             Iterator<Coordinate> it = snake1.body.iterator();
             it.next();
             afterHeadNotFinal = it.next();
@@ -1976,7 +2395,8 @@ public class AdderBoaCobra implements Bot, Runnable {
      * @param apple     the apple
      * @return a number between 0.0 and 1.0, giving the fraction of tiles closer to us
      */
-    private double percentageOfTilesCloserToUs(Snake snake1, Snake opponent1, Coordinate mazeSize, Coordinate apple) {
+    private double percentageOfTilesCloserToUs(Snake snake1, Snake opponent1, Coordinate mazeSize, Coordinate apple)
+    {
 
         // maybe we shouldn't do this inside the function:
         makeBFSGraph(snake1, opponent1, mazeSize, apple);
@@ -1989,26 +2409,38 @@ public class AdderBoaCobra implements Bot, Runnable {
         int nrTilesCloserToUs = 0;
         int nrTilesCloserToOpponent = 0;
 
-        for (int x = 0; x < mazeSize.x; x++) {
-            for (int y = 0; y < mazeSize.y; y++) {
+        for (int x = 0; x < mazeSize.x; x++)
+        {
+            for (int y = 0; y < mazeSize.y; y++)
+            {
                 Coordinate tile = new Coordinate(x, y);
-                if (snake_depth.get(tile) != null && opponent_depth.get(tile) != null) {
-                    if (snake_depth.get(tile) < opponent_depth.get(tile)) {
+                if (snake_depth.get(tile) != null && opponent_depth.get(tile) != null)
+                {
+                    if (snake_depth.get(tile) < opponent_depth.get(tile))
+                    {
                         nrTilesCloserToUs++;
-                    } else if (snake_depth.get(tile) > opponent_depth.get(tile)) {
+                    } else if (snake_depth.get(tile) > opponent_depth.get(tile))
+                    {
                         nrTilesCloserToOpponent++;
                     } // else: exactly equally close, tile doesn't count to either snake in that case
-                } else if (snake_depth.get(tile) != null && opponent_depth.get(tile) == null) {
+                }
+                else if (snake_depth.get(tile) != null && opponent_depth.get(tile) == null)
+                {
                     nrTilesCloserToUs++;
-                } else if (snake_depth.get(tile) == null && opponent_depth.get(tile) != null) {
+                }
+                else if (snake_depth.get(tile) == null && opponent_depth.get(tile) != null)
+                {
                     nrTilesCloserToOpponent++;
                 } // else: nobody can reach that tile apparently, nothing needs to be done in that case
             }
         }
         int nrReachableTiles = nrTilesCloserToUs + nrTilesCloserToOpponent;
-        if (nrReachableTiles != 0) {
+        if (nrReachableTiles != 0)
+        {
             return nrTilesCloserToUs / (double) nrReachableTiles;
-        } else {
+        }
+        else
+        {
             return 0.5;  // if no tiles are reachable by anyone, I guess we're even
         }
     }
@@ -2030,21 +2462,29 @@ public class AdderBoaCobra implements Bot, Runnable {
         int nrTilesCloserToOpponent = 0;
         Coordinate ourHead = snake1.getHead();
         Coordinate opponentHead = opponent1.getHead();
-        for (int x = 0; x < mazeSize.x; x++) {
-            for (int y = 0; y < mazeSize.y; y++) {
+
+        for (int x = 0; x < mazeSize.x; x++)
+        {
+            for (int y = 0; y < mazeSize.y; y++)
+            {
                 Coordinate tile = new Coordinate(x, y);
-                if (distanceBetween(ourHead, tile) < distanceBetween(opponentHead, tile)) {
+                if (distanceBetween(ourHead, tile) < distanceBetween(opponentHead, tile))
+                {
                     nrTilesCloserToUs++;
-                } else if (distanceBetween(ourHead, tile) > distanceBetween(opponentHead, tile)) {
+                }
+                else if (distanceBetween(ourHead, tile) > distanceBetween(opponentHead, tile))
+                {
                     nrTilesCloserToOpponent++;
                 } // else: equal distance, doesn't count
             }
         }
+
         int nrReachableTiles = nrTilesCloserToUs + nrTilesCloserToOpponent;
         return nrTilesCloserToUs / (double) nrReachableTiles;
     }
 
-    private double simplePercentageOfTilesCloserToUsDos(Snake snake1, Snake opponent1, Coordinate mazeSize, Coordinate apple) {
+    private double simplePercentageOfTilesCloserToUsDos(Snake snake1, Snake opponent1, Coordinate mazeSize, Coordinate apple)
+    {
         int nrTilesCloserToUs = 0;
         int nrTilesCloserToOpponent = 0;
         Coordinate ourHead = snake1.getHead();

@@ -28,6 +28,7 @@ public class SampleBot implements Bot {
 
         /* Get the coordinate of the second element of the snake's body
          * to prevent going backwards */
+        //hace que la serpierte no se devuelva
         Coordinate afterHeadNotFinal = null;
         if (snake.body.size() >= 2) {
             Iterator<Coordinate> it = snake.body.iterator();
@@ -38,12 +39,20 @@ public class SampleBot implements Bot {
         final Coordinate afterHead = afterHeadNotFinal;
 
         /* The only illegal move is going backwards. Here we are checking for not doing it */
+        //analiza las direcciones y elimina la opcion de devolverse
         Direction[] validMoves = Arrays.stream(DIRECTIONS)
                 .filter(d -> !head.moveTo(d).equals(afterHead)) // Filter out the backwards move
                 .sorted()
                 .toArray(Direction[]::new);
 
         /* Just naïve greedy algorithm that tries not to die at each moment in time */
+        //Las tres acciones de la serpiente:
+        //filter(): regresa todos los elementos del arreglo que cumplen los parametros
+        //no puede chocar con los bordes de la matriz,
+        //no puede chocar con la cabeza de la serpiente enemiga
+        //no puede chocar consigo mismo
+        //sorted() : reordena los elementos
+        //devuelve los datos, reconstruye el arreglo
         Direction[] notLosing = Arrays.stream(validMoves)
                 .filter(d -> head.moveTo(d).inBounds(mazeSize))             // Don't leave maze
                 .filter(d -> !opponent.elements.contains(head.moveTo(d)))   // Don't collide with opponent...

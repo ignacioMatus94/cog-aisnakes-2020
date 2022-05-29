@@ -131,9 +131,12 @@ public class alphabeta implements Bot, Runnable {
      * @return Direction of bot's move
      */
     private Direction makeMinMax() {
-        if (chase_tail) { // We won
+        if (chase_tail)
+        { // We won
             return directionFromTo(snake.getHead(), snake.body.getLast());
-        } else { // Do the normal strategy
+        }
+        else
+        { // Do the normal strategy
             getAppleSpots();
             Object[] cur_state = {snake.clone(), opponent.clone(), -1, -1, -1};
             minmax(cur_state, cur_state, maxDepth, Integer.MIN_VALUE, Integer.MAX_VALUE, true); // minimax(state, newstate, depth, alpha, beta, maximizing player)
